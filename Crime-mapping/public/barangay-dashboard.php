@@ -1,3 +1,7 @@
+<?php
+require __DIR__ . '/guard.php';
+requireRole(['barangay']);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>

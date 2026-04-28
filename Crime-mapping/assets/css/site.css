@@ -1,19 +1,19 @@
 :root {
     --font-display: "Space Grotesk", "IBM Plex Sans", sans-serif;
     --font-body: "IBM Plex Sans", "Space Grotesk", sans-serif;
-    --bg: #0f172a;
-    --surface: #111827;
-    --surface-light: #1f2937;
-    --surface-soft: #0b1120;
-    --text: #f8fafc;
-    --muted: #94a3b8;
-    --accent: #22d3ee;
-    --accent-strong: #06b6d4;
-    --warm: #f97316;
-    --success: #34d399;
-    --warning: #facc15;
-    --danger: #f43f5e;
-    --border: rgba(148, 163, 184, 0.2);
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --surface-light: #f9fafb;
+    --surface-soft: #f1f5f9;
+    --text: #0f172a;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --accent-strong: #1d4ed8;
+    --warm: #ea580c;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --border: rgba(15, 23, 42, 0.12);
 }
 
 * {
@@ -24,7 +24,7 @@ body {
     margin: 0;
     font-family: var(--font-body);
     color: var(--text);
-    background: radial-gradient(circle at top left, #1e293b 0%, #0f172a 45%, #020617 100%);
+    background: var(--bg);
     min-height: 100vh;
 }
 
@@ -32,8 +32,8 @@ body::before {
     content: "";
     position: fixed;
     inset: 0;
-    background: radial-gradient(circle at 80% 20%, rgba(34, 211, 238, 0.15), transparent 50%),
-        radial-gradient(circle at 10% 80%, rgba(249, 115, 22, 0.15), transparent 55%);
+    background: radial-gradient(circle at 85% 10%, rgba(37, 99, 235, 0.08), transparent 55%),
+        radial-gradient(circle at 5% 90%, rgba(234, 88, 12, 0.06), transparent 50%);
     pointer-events: none;
     z-index: -1;
 }
@@ -98,12 +98,12 @@ body::before {
 .site-nav a:hover,
 .site-nav a.is-active {
     color: var(--text);
-    background: rgba(148, 163, 184, 0.15);
+    background: rgba(15, 23, 42, 0.06);
 }
 
 .nav-cta {
     background: var(--accent);
-    color: #0f172a !important;
+    color: #ffffff !important;
     font-weight: 600;
 }
 
@@ -164,12 +164,12 @@ body::before {
 
 .btn-primary {
     background: var(--accent);
-    color: #0f172a;
-    box-shadow: 0 10px 20px rgba(34, 211, 238, 0.25);
+    color: #ffffff;
+    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
 }
 
 .btn-secondary {
-    background: rgba(148, 163, 184, 0.12);
+    background: var(--surface-soft);
     color: var(--text);
     border: 1px solid var(--border);
 }
@@ -193,10 +193,11 @@ body::before {
 }
 
 .stat-card {
-    background: rgba(15, 23, 42, 0.8);
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 16px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
 }
 
 .stat-label {
@@ -211,13 +212,14 @@ body::before {
 }
 
 .hero-map .map-shell {
-    background: rgba(2, 6, 23, 0.7);
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 24px;
     padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
 }
 
 .map-header {
@@ -275,13 +277,14 @@ body::before {
 }
 
 .panel {
-    background: rgba(15, 23, 42, 0.75);
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 20px;
     padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 16px;
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.06);
 }
 
 .panel-header {
@@ -299,7 +302,7 @@ body::before {
 
 .feed-item,
 .alert-item {
-    background: rgba(2, 6, 23, 0.6);
+    background: var(--surface-light);
     border-radius: 14px;
     padding: 12px 14px;
     border: 1px solid var(--border);
@@ -322,6 +325,7 @@ body::before {
     border: 1px solid var(--border);
     font-size: 11px;
     color: var(--muted);
+    background: var(--surface-soft);
 }
 
 .site-footer {
@@ -339,11 +343,12 @@ body::before {
 }
 
 .auth-card {
-    background: rgba(15, 23, 42, 0.7);
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 20px;
     padding: 28px;
     max-width: 480px;
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
 }
 
 .form-grid {
@@ -365,7 +370,7 @@ body::before {
     padding: 12px 14px;
     border-radius: 12px;
     border: 1px solid var(--border);
-    background: rgba(2, 6, 23, 0.8);
+    background: var(--surface);
     color: var(--text);
 }
 
@@ -373,7 +378,7 @@ body::before {
     padding: 12px 14px;
     border-radius: 12px;
     border: 1px solid var(--border);
-    background: rgba(2, 6, 23, 0.8);
+    background: var(--surface);
     color: var(--text);
     resize: vertical;
 }
@@ -391,7 +396,7 @@ body::before {
 
 .map-filters,
 .map-details {
-    background: rgba(2, 6, 23, 0.95);
+    background: var(--surface);
     border-right: 1px solid var(--border);
     padding: 24px;
     display: flex;
@@ -459,7 +464,7 @@ body::before {
 
 .toggle-btn.is-active {
     background: var(--accent-strong);
-    color: #0f172a;
+    color: #ffffff;
 }
 
 .filter-actions {
@@ -479,7 +484,7 @@ body::before {
     align-items: center;
     padding: 18px 24px;
     border-bottom: 1px solid var(--border);
-    background: rgba(2, 6, 23, 0.85);
+    background: var(--surface);
 }
 
 .map-nav a {
@@ -547,10 +552,11 @@ body::before {
 }
 
 .kpi-card {
-    background: rgba(2, 6, 23, 0.7);
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 16px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
 }
 
 .kpi-label {
@@ -576,12 +582,12 @@ body::before {
     padding: 12px 14px;
     border-radius: 12px;
     border: 1px solid var(--border);
-    background: rgba(2, 6, 23, 0.6);
+    background: var(--surface-light);
     font-size: 13px;
 }
 
 .table-row.header {
-    background: rgba(148, 163, 184, 0.12);
+    background: var(--surface-soft);
     font-weight: 600;
 }
 

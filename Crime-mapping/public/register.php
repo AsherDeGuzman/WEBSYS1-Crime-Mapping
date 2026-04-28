@@ -31,27 +31,66 @@
         <main class="auth-card">
             <h1>Create your account</h1>
             <p class="muted">Registered users can submit reports and track updates.</p>
-            <form class="form-grid" action="#" method="post">
+            <form class="form-grid" id="register-form" action="#" method="post">
                 <label>
                     <span>Full name</span>
-                    <input type="text" name="name" placeholder="Juan Dela Cruz" required />
+                    <input type="text" id="register-name" name="name" placeholder="Juan Dela Cruz" required />
                 </label>
                 <label>
                     <span>Email</span>
-                    <input type="email" name="email" placeholder="you@domain.com" required />
+                    <input type="email" id="register-email" name="email" placeholder="you@domain.com" required />
                 </label>
                 <label>
                     <span>Contact number</span>
-                    <input type="text" name="contact" placeholder="+63900 000 0000" required />
+                    <input type="text" id="register-contact" name="contact" placeholder="+63900 000 0000" required />
                 </label>
                 <label>
                     <span>Password</span>
-                    <input type="password" name="password" placeholder="Create a password" required />
+                    <input type="password" id="register-password" name="password" placeholder="Create a password" required />
                 </label>
                 <button class="btn-primary" type="submit">Register</button>
+                <p class="muted" id="register-status"></p>
                 <p class="muted">Already registered? <a href="login.php">Login here</a>.</p>
             </form>
         </main>
     </div>
+
+    <script>
+        const registerForm = document.getElementById("register-form");
+        const registerStatus = document.getElementById("register-status");
+
+        registerForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            registerStatus.textContent = "Creating account...";
+
+            const payload = {
+                name: document.getElementById("register-name").value.trim(),
+                email: document.getElementById("register-email").value.trim(),
+                contact: document.getElementById("register-contact").value.trim(),
+                password: document.getElementById("register-password").value
+            };
+
+            try {
+                const response = await fetch("../api/auth-register.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (!result.ok) {
+                    registerStatus.textContent = result.error || "Registration failed.";
+                    return;
+                }
+
+                registerStatus.textContent = "Account created.";
+                window.location.href = result.data.redirect;
+            } catch (error) {
+                console.error("Registration failed", error);
+                registerStatus.textContent = "Registration failed. Please try again.";
+            }
+        });
+    </script>
 </body>
 </html>

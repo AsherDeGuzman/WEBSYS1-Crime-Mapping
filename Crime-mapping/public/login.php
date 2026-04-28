@@ -31,19 +31,56 @@
         <main class="auth-card">
             <h1>Welcome back</h1>
             <p class="muted">Use your account to report incidents or manage barangay updates.</p>
-            <form class="form-grid" action="#" method="post">
+            <form class="form-grid" id="login-form" action="#" method="post">
                 <label>
                     <span>Email or username</span>
-                    <input type="text" name="identity" placeholder="you@domain.com" required />
+                    <input type="text" id="login-identity" name="identity" placeholder="you@domain.com" required />
                 </label>
                 <label>
                     <span>Password</span>
-                    <input type="password" name="password" placeholder="********" required />
+                    <input type="password" id="login-password" name="password" placeholder="********" required />
                 </label>
                 <button class="btn-primary" type="submit">Login</button>
+                <p class="muted" id="login-status"></p>
                 <p class="muted">No account yet? <a href="register.php">Create one here</a>.</p>
             </form>
         </main>
     </div>
+
+    <script>
+        const loginForm = document.getElementById("login-form");
+        const loginStatus = document.getElementById("login-status");
+
+        loginForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            loginStatus.textContent = "Signing in...";
+
+            const payload = {
+                identity: document.getElementById("login-identity").value.trim(),
+                password: document.getElementById("login-password").value
+            };
+
+            try {
+                const response = await fetch("../api/auth-login.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (!result.ok) {
+                    loginStatus.textContent = result.error || "Login failed.";
+                    return;
+                }
+
+                loginStatus.textContent = "Login successful.";
+                window.location.href = result.data.redirect;
+            } catch (error) {
+                console.error("Login failed", error);
+                loginStatus.textContent = "Login failed. Please try again.";
+            }
+        });
+    </script>
 </body>
 </html>
