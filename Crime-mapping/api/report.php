@@ -63,6 +63,37 @@ $insert->execute([
 
 $incidentId = (int) $pdo->lastInsertId();
 
+$recipientStmt = $pdo->prepare('
+    SELECT user_id, role
+    FROM users
+    WHERE status = "active" AND (role = "admin" OR (role = "barangay" AND barangay_id = :barangay_id))
+');
+$recipientStmt->execute([':barangay_id' => (int) $barangayRow['barangay_id']]);
+$recipients = $recipientStmt->fetchAll();
+
+$notificationStmt = $pdo->prepare('
+    INSERT INTO notifications (user_id, barangay_id, incident_id, notification_type, message)
+    VALUES (:user_id, :barangay_id, :incident_id, :notification_type, :message)
+');
+
+$notificationType = $payload['severity'] === 'high' ? 'high_severity' : 'new_report';
+$notificationMessage = sprintf(
+    'New %s report in %s: %s',
+    $notificationType === 'high_severity' ? 'high severity' : 'incident',
+    $barangayName,
+    trim($payload['title'])
+);
+
+foreach ($recipients as $recipient) {
+    $notificationStmt->execute([
+        ':user_id' => (int) $recipient['user_id'],
+        ':barangay_id' => (int) $barangayRow['barangay_id'],
+        ':incident_id' => $incidentId,
+        ':notification_type' => $notificationType,
+        ':message' => $notificationMessage
+    ]);
+}
+
 echo json_encode([
     'ok' => true,
     'incident_id' => $incidentId

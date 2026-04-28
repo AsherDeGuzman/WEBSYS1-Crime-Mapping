@@ -309,6 +309,12 @@ body::before {
 }
 
 .feed-item h3 {
+
+.alert-time {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--muted);
+}
     margin: 0 0 6px;
     font-size: 15px;
 }
@@ -469,8 +475,13 @@ body::before {
 
 .filter-actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 8px;
+}
+
+.filter-hint {
+    margin: 10px 0 0;
+    font-size: 12px;
 }
 
 .map-stage {
@@ -524,6 +535,76 @@ body::before {
     margin-top: auto;
 }
 
+.validation-panel {
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+    margin-top: 16px;
+    margin-bottom: 16px;
+}
+
+.validation-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 10px;
+}
+
+.validation-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.validation-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-light);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--font-body);
+    font-size: 13px;
+}
+
+.validation-btn:hover {
+    border-color: var(--accent);
+    background: var(--surface);
+}
+
+.validation-btn.is-active {
+    border-color: var(--accent);
+    background: rgba(37, 99, 235, 0.08);
+    color: var(--accent-strong);
+}
+
+.validation-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: currentColor;
+}
+
+.validation-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.validation-label-small {
+    display: block;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.validation-count {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+}
+
 .report-panel {
     display: none;
     border-top: 1px solid var(--border);
@@ -543,6 +624,116 @@ body::before {
 .report-actions {
     display: flex;
     gap: 10px;
+}
+
+.detail-modal {
+    display: none;
+    border-top: 1px solid var(--border);
+    padding-top: 18px;
+    margin-top: 18px;
+}
+
+.detail-modal.is-open {
+    display: block;
+}
+
+.detail-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.detail-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.detail-info {
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.detail-info p {
+    margin: 8px 0;
+}
+
+.detail-gallery {
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+}
+
+.gallery-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 10px;
+}
+
+.image-carousel {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.image-thumbnail {
+    width: 100%;
+    height: 120px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    object-fit: cover;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.image-thumbnail:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(15, 23, 42, 0.12);
+}
+
+.image-upload-section {
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+}
+
+.image-upload-label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+}
+
+#detail-image-input {
+    display: none;
+}
+
+.image-upload-label span {
+    display: block;
+}
+
+.image-upload-section::before {
+    content: "";
+    display: inline-block;
+    padding: 12px 16px;
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    background: var(--surface-light);
+    width: 100%;
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.image-upload-section:hover::before {
+    border-color: var(--accent);
+    background: rgba(37, 99, 235, 0.04);
+    color: var(--accent);
 }
 
 .dashboard-kpis {

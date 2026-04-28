@@ -1,6 +1,7 @@
 <?php
-header('Content-Type: application/json');
+session_start();
 require __DIR__ . '/db.php';
+header('Content-Type: application/json');
 
 $payload = json_decode(file_get_contents('php://input'), true);
 if (!$payload) {
@@ -36,7 +37,6 @@ if (!$isValid) {
     exit;
 }
 
-session_start();
 $_SESSION['user_id'] = (int) $user['user_id'];
 $_SESSION['username'] = $user['username'];
 $_SESSION['role'] = $user['role'];

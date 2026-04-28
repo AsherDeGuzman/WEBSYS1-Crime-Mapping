@@ -1,6 +1,6 @@
 <?php
-header('Content-Type: application/json');
 session_start();
+header('Content-Type: application/json');
 
 $_SESSION = [];
 if (ini_get('session.use_cookies')) {

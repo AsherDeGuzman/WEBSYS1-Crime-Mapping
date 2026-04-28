@@ -1,6 +1,7 @@
 <?php
-header('Content-Type: application/json');
+session_start();
 require __DIR__ . '/db.php';
+header('Content-Type: application/json');
 
 $payload = json_decode(file_get_contents('php://input'), true);
 if (!$payload) {
@@ -41,7 +42,6 @@ $insert->execute([
     ':role' => 'registered'
 ]);
 
-session_start();
 $_SESSION['user_id'] = (int) $pdo->lastInsertId();
 $_SESSION['username'] = $username;
 $_SESSION['role'] = 'registered';

@@ -1,3 +1,6 @@
+<?php
+session_start();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -60,15 +63,15 @@
             <div class="filter-group">
                 <label class="filter-label">Marker Style</label>
                 <div class="toggle-row">
-                    <button class="toggle-btn is-active" data-style="dot">Colored dots</button>
-                    <button class="toggle-btn" data-style="icon">Category icon</button>
+                    <button type="button" class="toggle-btn is-active" data-style="dot">Colored dots</button>
+                    <button type="button" class="toggle-btn" data-style="icon">Category icon</button>
                 </div>
             </div>
 
             <div class="filter-actions">
-                <button class="btn-primary" id="apply-filters">Apply Filters</button>
                 <button class="btn-secondary" id="reset-filters">Reset</button>
             </div>
+            <p class="muted filter-hint">Filters apply automatically as you change them.</p>
         </aside>
 
         <main class="map-stage">
@@ -97,15 +100,32 @@
                     <div class="eyebrow">Incident Details</div>
                     <h2 id="details-title">Select a pin</h2>
                 </div>
-                <button id="close-details" class="btn-tertiary">Close</button>
+                <button type="button" id="close-details" class="btn-tertiary">Close</button>
             </div>
             <div class="details-body" id="details-body">
                 <p class="muted">Click a marker to view the full report.</p>
             </div>
+            <div class="validation-panel">
+                <div class="validation-label">Is this report accurate?</div>
+                <div class="validation-buttons">
+                    <button type="button" class="validation-btn" id="credible-btn">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'/%3E%3Cpolyline points='22 4 12 14.01 9 11.01'/%3E%3C/svg%3E" alt="credible" class="validation-icon" />
+                        <div class="validation-text">
+                            <span class="validation-label-small">Credible</span>
+                            <span class="validation-count" id="credible-count">0</span>
+                        </div>
+                    </button>
+                    <button type="button" class="validation-btn" id="not-credible-btn">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='15' y1='9' x2='9' y2='15'/%3E%3Cline x1='9' y1='9' x2='15' y2='15'/%3E%3C/svg%3E" alt="not credible" class="validation-icon" />
+                        <div class="validation-text">
+                            <span class="validation-label-small">Not Credible</span>
+                            <span class="validation-count" id="not-credible-count">0</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
             <div class="details-actions">
-                <button class="btn-secondary" id="thumbs-up">Thumbs up</button>
-                <button class="btn-secondary" id="thumbs-down">Thumbs down</button>
-                <button class="btn-primary" id="report-crime">Report a crime</button>
+                <button type="button" class="btn-primary" id="report-crime">Report a crime</button>
             </div>
 
             <div class="report-panel" id="report-panel">
@@ -114,7 +134,7 @@
                         <div class="eyebrow">Submit Report</div>
                         <h2>Report a crime</h2>
                     </div>
-                    <button id="close-report" class="btn-tertiary">Close</button>
+                    <button type="button" id="close-report" class="btn-tertiary">Close</button>
                 </div>
                 <form id="report-form" class="form-grid">
                     <label>
@@ -159,6 +179,37 @@
                     </div>
                     <p class="muted" id="report-status"></p>
                 </form>
+            </div>
+
+            <div class="detail-modal" id="detail-modal">
+                <div class="detail-modal-header">
+                    <div>
+                        <div class="eyebrow">Incident Details</div>
+                        <h2 id="modal-title">Loading...</h2>
+                    </div>
+                    <button type="button" id="close-modal" class="btn-tertiary">Close</button>
+                </div>
+
+                <div class="detail-modal-body">
+                    <div class="detail-info" id="detail-info">
+                        <p class="muted">Loading incident details...</p>
+                    </div>
+
+                    <div class="detail-gallery">
+                        <div class="gallery-label">Evidence Images</div>
+                        <div class="image-carousel" id="image-carousel">
+                            <p class="muted">No images uploaded yet.</p>
+                        </div>
+                    </div>
+
+                    <div class="image-upload-section">
+                        <label class="image-upload-label">
+                            <span>Upload Image</span>
+                            <input type="file" id="detail-image-input" accept="image/*" />
+                        </label>
+                        <p class="muted" id="upload-status"></p>
+                    </div>
+                </div>
             </div>
         </aside>
     </div>

@@ -1,0 +1,189 @@
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold text-success" routerLink="/">
+      <i class="fas fa-leaf me-2"></i>Pollution Report
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" title="Toggle navigation menu" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto align-items-center">
+        <li class="nav-item"><a class="nav-link" routerLink="/"><i class="fas fa-home me-1"></i> Home</a></li>@if ((user$ | async)?.role !== 'admin') {<li class="nav-item"><a class="nav-link" routerLink="/help"><i class="fas fa-question-circle me-1"></i> Help</a></li>}<li class="nav-item"><a class="nav-link" routerLink="/settings"><i class="fas fa-cog me-1"></i> Settings</a></li>
+        <li class="nav-item" *ngIf="(user$ | async)?.role === 'admin'">
+          <a class="nav-link d-flex align-items-center" routerLink="/admin">
+            <i class="fas fa-shield-alt me-1"></i> Admin
+            @if (adminPendingApprovalCount > 0) {
+              <span class="badge bg-danger ms-1 notification-badge">{{ adminPendingApprovalCount > 99 ? '99+' : adminPendingApprovalCount }}</span>
+            }
+          </a>
+        </li>
+        <li class="nav-item ms-lg-3" *ngIf="(user$ | async)?.role !== 'admin'">
+          <a class="btn btn-success" routerLink="/submit-report"><i class="fas fa-plus me-1"></i> New Report</a>
+        </li>
+        <li class="nav-item dropdown ms-lg-2 profile-dropdown" *ngIf="user$ | async as user">
+          <a class="nav-link dropdown-toggle d-flex align-items-center position-relative" href="#" role="button" (click)="toggleProfileMenu($event)" [attr.aria-expanded]="showProfileMenu" title="User menu" aria-label="User menu">
+            <img *ngIf="user.profilePictureUrl; else userIcon"
+                 [src]="user.profilePictureUrl"
+                 alt="Profile"
+                 class="rounded-circle"
+                 style="width: 32px; height: 32px; object-fit: cover; border: 2px solid #198754;">
+            <ng-template #userIcon>
+              <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center"
+                   style="width: 32px; height: 32px; font-size: 0.9rem;">
+                {{ (user.username || user.fullName || user.email || 'U').charAt(0).toUpperCase() }}
+              </div>
+            </ng-template>
+            @if (unreadNotificationCount > 0) {
+              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger profile-notification-badge">{{ unreadNotificationCount > 9 ? '9+' : unreadNotificationCount }}</span>
+            }
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end" [class.show]="showProfileMenu">
+            <li><a class="dropdown-item" routerLink="/profile"><i class="fas fa-user me-2"></i>My Profile</a></li>
+            <li>
+              <a class="dropdown-item d-flex justify-content-between align-items-center" routerLink="/notifications">
+                <span><i class="fas fa-bell me-2"></i>Notifications</span>
+                <span *ngIf="unreadNotificationCount > 0" class="badge bg-danger rounded-pill">{{ unreadNotificationCount > 99 ? '99+' : unreadNotificationCount }}</span>
+              </a>
+            </li>
+            <li><a class="dropdown-item" routerLink="/settings"><i class="fas fa-cog me-2"></i>Settings</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" (click)="logout()"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+          </ul>
+        </li>
+
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<form (ngSubmit)="submit()" class="container mt-4">
+  <div class="row g-3">
+    <div class="col-12 col-md-6">
+      <label class="form-label">Pollution Type</label>
+      <select class="form-select" title="Type of Pollution" [(ngModel)]="report.type" name="type" required>
+        <option value="">Select type...</option>
+        <option *ngFor="let t of (pollutionTypes$ | async)" [value]="t.value">{{ t.label || t.value }}</option>
+        <option *ngIf="!(pollutionTypes$ | async)" value="air">Air</option>
+        <option *ngIf="!(pollutionTypes$ | async)" value="water">Water</option>
+        <option *ngIf="!(pollutionTypes$ | async)" value="land">Land</option>
+      </select>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <label class="form-label">Date Taken</label>
+      <input class="form-control" type="date" [(ngModel)]="report.dateTaken" name="dateTaken" title="Date when photos were taken">
+    </div>
+
+    <div class="col-6 col-md-3">
+      <label class="form-label">Time Taken</label>
+      <input class="form-control" type="time" [(ngModel)]="report.timeTaken" name="timeTaken" title="Time when photos were taken">
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Location <span class="text-danger">*</span></label>
+      <div class="input-group">
+        <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+        <input class="form-control" type="text" [(ngModel)]="report.location" name="location"
+               placeholder="Select a street or drag pin on map" readonly
+               title="Location updates when you select a street or drag the pin">
+        <select class="form-select street-dropdown" title="Select a known street (optional)"
+                (change)="onStreetSelect($any($event.target).value); $any($event.target).value = ''">
+          <option value="">Streets</option>
+          <option *ngFor="let l of (locations$ | async)" [value]="l.value">{{ l.label || l.value }}</option>
+        </select>
+      </div>
+      <small class="text-muted">Select a street from dropdown or drag the pin on the map below</small>
+    </div>
+
+    <!-- Map: auto-centers on user's barangay with boundary, allows draggable marker -->
+    <div class="col-12 mb-3">
+      <label class="form-label">
+        <i class="fas fa-map-marker-alt text-success me-2"></i>
+        Pinpoint Exact Location <span class="text-danger">*</span>
+      </label>
+      <div class="d-flex gap-2 mb-2">
+        <button type="button" class="btn btn-outline-success" (click)="getMyLocation()" [disabled]="isLocating">
+          <i class="fas" [class.fa-crosshairs]="!isLocating" [class.fa-spinner]="isLocating" [class.fa-spin]="isLocating"></i>
+          {{ isLocating ? 'Locating...' : 'Get My Location' }}
+        </button>
+      </div>
+      <div id="map" class="map-display"></div>
+      <small class="text-muted d-block mt-2">
+        <i class="fas fa-info-circle me-1"></i>
+        Click "Get My Location" to use your current position, or click anywhere on the map / drag the marker to set the exact pollution location. The red border shows your barangay boundary.
+      </small>
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Description</label>
+      <textarea class="form-control" [(ngModel)]="report.description" name="description" required rows="4" placeholder="Describe the pollution observed"></textarea>
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Upload Images (max {{maxFiles}})</label>
+      <div class="border rounded p-3 upload-drop" (dragover)="onDragOver($event)" (drop)="onDrop($event)">
+        <div class="mb-2">Drag &amp; drop images here or</div>
+        <input type="file" (change)="onFileChange($event)" accept="image/*" multiple [disabled]="uploading" title="Select images to upload" />
+        <div class="small text-muted mt-2">You can upload up to {{maxFiles}} images. Images will be compressed before upload.</div>
+      </div>
+    </div>
+
+    <div class="col-12" *ngIf="previews.length">
+      <div class="d-flex flex-wrap gap-2">
+        @for (p of previews; track $index) {
+          <div class="preview-card">
+            <img [src]="p" class="preview-img rounded" alt="preview">
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="col-12" *ngIf="uploading">
+      <label class="form-label">Upload Progress</label>
+      <div class="progress mb-1 overall-progress">
+        <div class="progress-bar" role="progressbar" [style.width.%]="overallPercent" title="Overall upload progress">{{overallPercent}}%</div>
+      </div>
+      <div class="small text-muted">Uploading images...</div>
+    </div>
+
+    <div class="col-12 d-flex justify-content-end">
+      <button type="submit" [disabled]="uploading" class="btn btn-primary">{{ uploading ? 'Uploading...' : 'Submit Report' }}</button>
+    </div>
+  </div>
+</form>
+
+<!-- Mobile Bottom Navigation (visible only on mobile) -->
+<nav class="mobile-bottom-nav d-md-none">
+  <a routerLink="/" class="mobile-nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+    <i class="fas fa-home"></i>
+    <span>Home</span>
+  </a>
+  <a routerLink="/submit-report" class="mobile-nav-item active">
+    <i class="fas fa-plus-circle"></i>
+    <span>Report</span>
+  </a>
+  <a routerLink="/notifications" class="mobile-nav-item position-relative" routerLinkActive="active">
+    <i class="fas fa-bell"></i>
+    <span>Alerts</span>
+    @if (unreadNotificationCount > 0) {
+      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger mobile-badge">{{ unreadNotificationCount > 9 ? '9+' : unreadNotificationCount }}</span>
+    }
+  </a>
+  @if ((user$ | async)?.role === 'admin') {
+    <a routerLink="/admin" class="mobile-nav-item position-relative" routerLinkActive="active">
+      <i class="fas fa-shield-alt"></i>
+      <span>Admin</span>
+      @if (adminPendingApprovalCount > 0) {
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger mobile-badge">{{ adminPendingApprovalCount > 9 ? '9+' : adminPendingApprovalCount }}</span>
+      }
+    </a>
+  }
+  <a routerLink="/profile" class="mobile-nav-item" routerLinkActive="active">
+    <i class="fas fa-user"></i>
+    <span>Account</span>
+  </a>
+</nav>
+<br>

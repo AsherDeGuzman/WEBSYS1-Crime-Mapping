@@ -43,19 +43,19 @@ requireRole(['barangay']);
             <section class="dashboard-kpis">
                 <div class="kpi-card">
                     <div class="kpi-label">Pending reports</div>
-                    <div class="kpi-value">12</div>
+                    <div class="kpi-value" id="kpi-pending">--</div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-label">Active cases</div>
-                    <div class="kpi-value">7</div>
+                    <div class="kpi-value" id="kpi-active">--</div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-label">Resolved this month</div>
-                    <div class="kpi-value">5</div>
+                    <div class="kpi-value" id="kpi-resolved">--</div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-label">High risk areas</div>
-                    <div class="kpi-value">2</div>
+                    <div class="kpi-value" id="kpi-high-risk">--</div>
                 </div>
             </section>
 
@@ -64,30 +64,12 @@ requireRole(['barangay']);
                     <h2>Report Queue</h2>
                     <button class="btn-secondary">Export CSV</button>
                 </div>
-                <div class="data-table">
+                <div class="data-table" id="incident-table">
                     <div class="table-row header">
                         <div>Incident</div>
                         <div>Status</div>
                         <div>Date</div>
                         <div>Severity</div>
-                    </div>
-                    <div class="table-row">
-                        <div>Illegal parking complaint</div>
-                        <div>Pending</div>
-                        <div>Apr 27, 2026</div>
-                        <div>Low</div>
-                    </div>
-                    <div class="table-row">
-                        <div>Robbery incident near market</div>
-                        <div>Under investigation</div>
-                        <div>Apr 26, 2026</div>
-                        <div>High</div>
-                    </div>
-                    <div class="table-row">
-                        <div>Vandalism at school</div>
-                        <div>Action taken</div>
-                        <div>Apr 25, 2026</div>
-                        <div>Medium</div>
                     </div>
                 </div>
             </section>
@@ -100,3 +82,62 @@ requireRole(['barangay']);
     </div>
 </body>
 </html>
+
+    <script>
+        const statusLabels = {
+            pending: 'Pending',
+            under_investigation: 'Under investigation',
+            action_taken: 'Action taken',
+            resolved: 'Resolved',
+            dismissed: 'Dismissed'
+        };
+
+        const severityLabels = {
+            low: 'Low',
+            medium: 'Medium',
+            high: 'High'
+        };
+
+        async function loadDashboard() {
+            try {
+                const response = await fetch('../api/barangay-incidents.php');
+                const data = await response.json();
+
+                if (!data.ok) {
+                    console.error(data.error);
+                    return;
+                }
+
+                // Update KPIs
+                document.getElementById('kpi-pending').textContent = data.kpis.pending;
+                document.getElementById('kpi-active').textContent = data.kpis.active;
+                document.getElementById('kpi-resolved').textContent = data.kpis.resolved_month;
+                document.getElementById('kpi-high-risk').textContent = data.kpis.high_risk;
+
+                // Populate table
+                const table = document.getElementById('incident-table');
+                data.incidents.slice(0, 10).forEach(incident => {
+                    const row = document.createElement('div');
+                    row.className = 'table-row';
+                    row.innerHTML = `
+                        <div>${incident.title}</div>
+                        <div>${statusLabels[incident.status] || incident.status}</div>
+                        <div>${incident.date}</div>
+                        <div>${severityLabels[incident.severity] || incident.severity}</div>
+                    `;
+                    table.appendChild(row);
+                });
+
+                if (data.incidents.length === 0) {
+                    const row = document.createElement('div');
+                    row.className = 'table-row';
+                    row.innerHTML = '<div colspan="4">No reports yet.</div>';
+                    table.appendChild(row);
+                }
+            } catch (error) {
+                console.error('Failed to load dashboard:', error);
+            }
+        }
+
+        loadDashboard();
+    </script>

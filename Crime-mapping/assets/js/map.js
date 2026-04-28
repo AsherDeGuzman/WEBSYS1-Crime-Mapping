@@ -14,6 +14,17 @@ const typeColors = {
     status_offense: "#fb7185"
 };
 
+const typeIconUrls = {
+    violent: "../assets/images/icons/violent.svg",
+    property: "../assets/images/icons/property.svg",
+    drug: "../assets/images/icons/drug.svg",
+    traffic: "../assets/images/icons/traffic.svg",
+    cybercrime: "../assets/images/icons/cybercrime.svg",
+    white_collar: "../assets/images/icons/white_collar.svg",
+    public_order: "../assets/images/icons/public_order.svg",
+    status_offense: "../assets/images/icons/status_offense.svg"
+};
+
 let barangays = [];
 
 const map = L.map("map").setView([16.455, 120.59], 12);
@@ -31,7 +42,6 @@ const statusFilter = document.getElementById("status-filter");
 const detailsPanel = document.getElementById("details-panel");
 const detailsTitle = document.getElementById("details-title");
 const detailsBody = document.getElementById("details-body");
-const detailsActions = document.querySelector(".details-actions");
 const markerStyleButtons = document.querySelectorAll(".toggle-btn");
 const reportPanel = document.getElementById("report-panel");
 const reportForm = document.getElementById("report-form");
@@ -47,11 +57,24 @@ const reportStatus = document.getElementById("report-status");
 const reportButton = document.getElementById("report-crime");
 const reportClose = document.getElementById("close-report");
 const reportCancel = document.getElementById("report-cancel");
+const credibleBtn = document.getElementById("credible-btn");
+const notCredibleBtn = document.getElementById("not-credible-btn");
+const credibleCount = document.getElementById("credible-count");
+const notCredibleCount = document.getElementById("not-credible-count");
+const detailModal = document.getElementById("detail-modal");
+const modalTitle = document.getElementById("modal-title");
+const detailInfo = document.getElementById("detail-info");
+const imageCarousel = document.getElementById("image-carousel");
+const detailImageInput = document.getElementById("detail-image-input");
+const uploadStatus = document.getElementById("upload-status");
+const closeModal = document.getElementById("close-modal");
 
 let markerStyle = "dot";
 let activeTypes = new Set();
 let reportLatLng = null;
 let reportTypes = [];
+let currentIncidentId = null;
+let filterTimer = null;
 
 function buildTypeFilters() {
     typeFilters.innerHTML = "";
@@ -73,8 +96,20 @@ function buildTypeFilters() {
             } else {
                 activeTypes.delete(type);
             }
+
+            scheduleLoadIncidents();
         });
     });
+}
+
+function scheduleLoadIncidents() {
+    if (filterTimer) {
+        clearTimeout(filterTimer);
+    }
+
+    filterTimer = setTimeout(() => {
+        loadIncidents();
+    }, 150);
 }
 
 function buildBarangayOptions() {
@@ -127,7 +162,14 @@ function isWithinDateRange(dateString) {
 
 function createMarker(incident) {
     if (markerStyle === "icon") {
-        return L.marker([incident.lat, incident.lng]);
+        return L.marker([incident.lat, incident.lng], {
+            icon: L.icon({
+                iconUrl: typeIconUrls[incident.type] || "../assets/images/icons/violent.svg",
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -28]
+            })
+        });
     }
     return L.circleMarker([incident.lat, incident.lng], {
         radius: 7,
@@ -150,34 +192,97 @@ function renderMarkers() {
                 `<strong>${incident.title}</strong><br>${incident.barangay} • ${incident.date}<br>${incident.description}`,
                 { direction: "top" }
             );
-            marker.on("click", () => showDetails(incident));
+            marker.on("click", () => openDetailModal(incident));
         });
 }
 
 function showDetails(incident) {
+    currentIncidentId = incident.id;
     detailsPanel.classList.add("is-open");
-    detailsTitle.textContent = incident.title;
+    detailsTitle.textContent = "Selected report";
     detailsBody.innerHTML = `
-        <p><strong>Barangay:</strong> ${incident.barangay}</p>
-        <p><strong>Date:</strong> ${incident.date}</p>
-        <p><strong>Status:</strong> ${formatStatus(incident.status)}</p>
-        <p><strong>Severity:</strong> ${incident.severity}</p>
-        <p class="muted">${incident.description}</p>
+        <p><strong>${incident.title}</strong></p>
+        <p class="muted">Full details are shown in the detail panel.</p>
     `;
+}
+
+async function loadIncidentDetail(incidentId) {
+    try {
+        const response = await fetch(`${apiBase}/incident-detail.php?incident_id=${incidentId}`);
+        const data = await response.json();
+
+        if (!data.ok) {
+            detailInfo.innerHTML = '<p class="muted">Failed to load incident details.</p>';
+            return;
+        }
+
+        const incident = data.incident;
+        modalTitle.textContent = incident.title;
+
+        detailInfo.innerHTML = `
+            <div>
+                <p><strong>Barangay:</strong> ${incident.barangay}</p>
+                <p><strong>Date:</strong> ${incident.occurred_at}</p>
+                <p><strong>Status:</strong> ${formatStatus(incident.status)}</p>
+                <p><strong>Severity:</strong> ${incident.severity}</p>
+                <p><strong>Type:</strong> ${incident.type_name}</p>
+                ${incident.reported_by ? `<p><strong>Reported by:</strong> ${incident.reported_by}</p>` : ''}
+                <p class="muted" style="margin-top: 12px;">${incident.description}</p>
+            </div>
+        `;
+
+        renderImages(data.images);
+    } catch (error) {
+        console.error("Failed to load incident detail", error);
+        detailInfo.innerHTML = '<p class="muted">Failed to load incident details.</p>';
+    }
+}
+
+function renderImages(images) {
+    imageCarousel.innerHTML = "";
+    if (!images || images.length === 0) {
+        imageCarousel.innerHTML = '<p class="muted">No images uploaded yet.</p>';
+        return;
+    }
+
+    images.forEach((img) => {
+        const imgElement = document.createElement("img");
+        imgElement.src = "../" + img.file_path;
+        imgElement.alt = "Evidence";
+        imgElement.className = "image-thumbnail";
+        imgElement.addEventListener("click", () => viewImageFull(img.file_path));
+        imageCarousel.appendChild(imgElement);
+    });
+}
+
+function viewImageFull(filePath) {
+    window.open("../" + filePath, "_blank");
+}
+
+function openDetailModal(incident) {
+    showDetails(incident);
+    currentIncidentId = incident.id;
+    detailModal.classList.add("is-open");
+    uploadStatus.textContent = "";
+    loadValidationCounts();
+    loadIncidentDetail(incident.id);
+}
+
+function closeDetailModal() {
+    detailModal.classList.remove("is-open");
+    currentIncidentId = null;
+    uploadStatus.textContent = "";
 }
 
 function openReportPanel() {
     reportPanel.classList.add("is-open");
     detailsBody.classList.add("is-hidden");
-    detailsActions.classList.add("is-hidden");
     reportStatus.textContent = "";
 }
 
 function closeReportPanel() {
     reportPanel.classList.remove("is-open");
     detailsBody.classList.remove("is-hidden");
-    detailsActions.classList.remove("is-hidden");
-    reportStatus.textContent = "";
 }
 
 function setReportCoords(latlng) {
@@ -276,7 +381,88 @@ markerStyleButtons.forEach((button) => {
     });
 });
 
-document.getElementById("apply-filters").addEventListener("click", loadIncidents);
+async function loadValidationCounts() {
+    if (!currentIncidentId) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${apiBase}/validate-report.php?incident_id=${currentIncidentId}`, {
+            method: "GET"
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.ok) {
+                credibleCount.textContent = data.credible || 0;
+                notCredibleCount.textContent = data.not_credible || 0;
+
+                credibleBtn.classList.remove("is-active");
+                notCredibleBtn.classList.remove("is-active");
+
+                if (data.user_reaction === "credible") {
+                    credibleBtn.classList.add("is-active");
+                } else if (data.user_reaction === "not_credible") {
+                    notCredibleBtn.classList.add("is-active");
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Failed to load validation counts", error);
+    }
+}
+
+async function submitValidation(reaction) {
+    if (!currentIncidentId) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${apiBase}/validate-report.php`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                incident_id: currentIncidentId,
+                reaction: reaction
+            })
+        });
+
+        const data = await response.json();
+        if (data.ok) {
+            credibleCount.textContent = data.credible || 0;
+            notCredibleCount.textContent = data.not_credible || 0;
+
+            // Update button active states
+            credibleBtn.classList.remove("is-active");
+            notCredibleBtn.classList.remove("is-active");
+
+            if (data.user_reaction === "credible") {
+                credibleBtn.classList.add("is-active");
+            } else if (data.user_reaction === "not_credible") {
+                notCredibleBtn.classList.add("is-active");
+            }
+        }
+    } catch (error) {
+        console.error("Failed to submit validation", error);
+    }
+}
+
+credibleBtn.addEventListener("click", () => {
+    submitValidation("credible");
+});
+
+notCredibleBtn.addEventListener("click", () => {
+    submitValidation("not_credible");
+});
+
+searchInput.addEventListener("input", scheduleLoadIncidents);
+barangayFilter.addEventListener("change", loadIncidents);
+statusFilter.addEventListener("change", loadIncidents);
+dateStart.addEventListener("change", loadIncidents);
+dateEnd.addEventListener("change", loadIncidents);
+
 document.getElementById("reset-filters").addEventListener("click", () => {
     resetFilters();
     loadIncidents();
@@ -284,6 +470,41 @@ document.getElementById("reset-filters").addEventListener("click", () => {
 
 document.getElementById("close-details").addEventListener("click", () => {
     detailsPanel.classList.remove("is-open");
+});
+
+closeModal.addEventListener("click", closeDetailModal);
+
+detailImageInput.addEventListener("change", async (event) => {
+    const file = event.target.files[0];
+    if (!file || !currentIncidentId) {
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("incident_id", currentIncidentId);
+    formData.append("image", file);
+
+    uploadStatus.textContent = "Uploading...";
+
+    try {
+        const response = await fetch(`${apiBase}/upload-image.php`, {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.json();
+        if (!result.ok) {
+            uploadStatus.textContent = result.error || "Upload failed.";
+            return;
+        }
+
+        uploadStatus.textContent = "Image uploaded successfully.";
+        detailImageInput.value = "";
+        loadIncidentDetail(currentIncidentId);
+    } catch (error) {
+        console.error("Image upload failed", error);
+        uploadStatus.textContent = "Upload failed. Please try again.";
+    }
 });
 
 reportButton.addEventListener("click", openReportPanel);
