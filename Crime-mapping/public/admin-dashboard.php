@@ -24,10 +24,10 @@ requireRole(['admin']);
                 </div>
             </div>
             <nav class="site-nav">
-                <a href="index.php">Dashboard</a>
-                <a href="map.php">Map</a>
-                <a href="barangay-dashboard.php">Barangay</a>
-                <a class="is-active" href="admin-dashboard.php">Administration</a>
+                <a href="admin-dashboard.php" class="is-active">Dashboard</a>
+                <a href="admin-map.php">Map</a>
+                <a href="admin-incidents.php">Incidents</a>
+                <a href="auth-logout.php">Logout</a>
             </nav>
         </header>
 
@@ -58,6 +58,7 @@ requireRole(['admin']);
                     <div class="kpi-value" id="kpi-high-severity">--</div>
                 </div>
             </section>
+            <br>
 
             <section class="panel">
                 <div class="panel-header">

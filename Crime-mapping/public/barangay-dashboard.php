@@ -24,10 +24,10 @@ requireRole(['barangay']);
                 </div>
             </div>
             <nav class="site-nav">
-                <a href="index.php">Dashboard</a>
-                <a href="map.php">Map</a>
-                <a class="is-active" href="barangay-dashboard.php">Barangay</a>
-                <a href="about.php">About & FAQ</a>
+                <a href="barangay-dashboard.php" class="is-active">Dashboard</a>
+                <a href="barangay-map.php">Map</a>
+                <a href="barangay-incidents.php">Incidents</a>
+                <a href="auth-logout.php">Logout</a>
             </nav>
         </header>
 

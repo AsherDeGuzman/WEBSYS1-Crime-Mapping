@@ -1,12 +1,14 @@
 <?php
 session_start();
+require __DIR__ . '/guard.php';
+requireRole(['admin']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Crime Map | La Trinidad</title>
+    <title>Admin Map | La Trinidad Crime Mapping</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -18,10 +20,10 @@ session_start();
         <aside class="map-filters">
             <div class="filters-header">
                 <div>
-                    <div class="eyebrow">Filters</div>
-                    <h2>Crime Map</h2>
+                    <div class="eyebrow">Admin Control</div>
+                    <h2>Crime Map - Global View</h2>
                 </div>
-                <a class="btn-tertiary" href="index.php">Back</a>
+                <a class="btn-tertiary" href="admin-dashboard.php">Back</a>
             </div>
 
             <div class="filter-group">
@@ -71,7 +73,7 @@ session_start();
             <div class="filter-actions">
                 <button class="btn-secondary" id="reset-filters">Reset</button>
             </div>
-            <p class="muted filter-hint">Filters apply automatically as you change them.</p>
+            <p class="muted filter-hint">All incidents visible. Filters apply automatically.</p>
         </aside>
 
         <main class="map-stage">
@@ -80,14 +82,14 @@ session_start();
                     <span class="brand-mark"></span>
                     <div>
                         <div class="brand-title">La Trinidad Crime Mapping</div>
-                        <div class="brand-subtitle">Interactive map view</div>
+                        <div class="brand-subtitle">Admin global view</div>
                     </div>
                 </div>
                 <nav class="map-nav">
-                    <a href="index.php">Dashboard</a>
-                    <a class="is-active" href="map.php">Map</a>
-                    <a href="about.php">About & FAQ</a>
-                    <a href="login.php">Login</a>
+                    <a href="admin-dashboard.php">Dashboard</a>
+                    <a class="is-active" href="admin-map.php">Map</a>
+                    <a href="admin-incidents.php">Incidents</a>
+                    <a href="auth-logout.php">Logout</a>
                 </nav>
             </header>
 
@@ -106,29 +108,28 @@ session_start();
                 <p class="muted">Click a marker to view the full report.</p>
             </div>
             <div class="validation-panel">
-                <div class="validation-label">Is this report accurate?</div>
+                <div class="validation-label">Report Actions</div>
                 <div class="validation-buttons">
-                    <button type="button" class="validation-btn" id="credible-btn">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'/%3E%3Cpolyline points='22 4 12 14.01 9 11.01'/%3E%3C/svg%3E" alt="credible" class="validation-icon" />
+                    <button type="button" class="validation-btn" id="approve-btn">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'/%3E%3Cpolyline points='22 4 12 14.01 9 11.01'/%3E%3C/svg%3E" alt="approve" class="validation-icon" />
                         <div class="validation-text">
-                            <span class="validation-label-small">Credible</span>
-                            <span class="validation-count" id="credible-count">0</span>
+                            <span class="validation-label-small">Approve</span>
                         </div>
                     </button>
-                    <button type="button" class="validation-btn" id="not-credible-btn">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='15' y1='9' x2='9' y2='15'/%3E%3Cline x1='9' y1='9' x2='15' y2='15'/%3E%3C/svg%3E" alt="not credible" class="validation-icon" />
+                    <button type="button" class="validation-btn" id="reject-btn">
+                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='15' y1='9' x2='9' y2='15'/%3E%3Cline x1='9' y1='9' x2='15' y2='15'/%3E%3C/svg%3E" alt="reject" class="validation-icon" />
                         <div class="validation-text">
-                            <span class="validation-label-small">Not Credible</span>
-                            <span class="validation-count" id="not-credible-count">0</span>
+                            <span class="validation-label-small">Reject</span>
                         </div>
                     </button>
                 </div>
             </div>
+
             <div class="details-actions">
-                <button type="button" class="btn-primary" id="report-crime">Report a crime</button>
+                <button type="button" class="btn-primary" id="report-crime" style="display:none;">Report a crime</button>
             </div>
 
-            <div class="report-panel" id="report-panel">
+            <div class="report-panel" id="report-panel" style="display:none;">
                 <div class="details-header">
                     <div>
                         <div class="eyebrow">Submit Report</div>
@@ -214,6 +215,11 @@ session_start();
         </aside>
     </div>
 
+    <script>
+        // Admin mode: no barangay restriction
+        const userBarangayId = null;
+        const userBarangayName = null;
+    </script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script src="../assets/js/map.js"></script>
 </body>

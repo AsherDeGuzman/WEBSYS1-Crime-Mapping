@@ -1,5 +1,6 @@
 const apiBase = "../api";
 let incidents = [];
+let isBarangayMode = typeof userBarangayName !== 'undefined' && userBarangayName !== null;
 
 let typeLabels = {};
 
@@ -27,10 +28,19 @@ const typeIconUrls = {
 
 let barangays = [];
 
-const map = L.map("map").setView([16.455, 120.59], 12);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "&copy; OpenStreetMap contributors"
-}).addTo(map);
+let map;
+try {
+    console.log("Initializing map container...");
+    map = L.map("map").setView([16.455, 120.59], 12);
+    console.log("Map initialized successfully");
+    
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
+    console.log("Tile layer added");
+} catch (error) {
+    console.error("Failed to initialize map:", error);
+}
 
 const markersLayer = L.layerGroup().addTo(map);
 const typeFilters = document.getElementById("type-filters");
@@ -113,6 +123,10 @@ function scheduleLoadIncidents() {
 }
 
 function buildBarangayOptions() {
+    if (!barangayFilter) {
+        console.warn("barangayFilter element not found");
+        return;
+    }
     barangayFilter.innerHTML = '<option value="">All barangays</option>';
     barangays.forEach((barangay) => {
         const option = document.createElement("option");
@@ -123,6 +137,10 @@ function buildBarangayOptions() {
 }
 
 function buildReportTypeOptions() {
+    if (!reportType) {
+        console.warn("reportType element not found");
+        return;
+    }
     reportType.innerHTML = "";
     reportTypes.forEach((type) => {
         const option = document.createElement("option");
@@ -133,6 +151,10 @@ function buildReportTypeOptions() {
 }
 
 function buildReportBarangayOptions() {
+    if (!reportBarangay) {
+        console.warn("reportBarangay element not found");
+        return;
+    }
     reportBarangay.innerHTML = "";
     barangays.forEach((barangay) => {
         const option = document.createElement("option");
@@ -179,21 +201,27 @@ function createMarker(incident) {
 }
 
 function renderMarkers() {
-    markersLayer.clearLayers();
+    try {
+        console.log("Rendering markers...");
+        markersLayer.clearLayers();
 
-    incidents
-        .filter((incident) => activeTypes.has(incident.type))
-        .filter((incident) => (barangayFilter.value ? incident.barangay === barangayFilter.value : true))
-        .filter((incident) => (statusFilter.value ? incident.status === statusFilter.value : true))
-        .filter((incident) => isWithinDateRange(incident.date))
-        .forEach((incident) => {
-            const marker = createMarker(incident).addTo(markersLayer);
-            marker.bindTooltip(
-                `<strong>${incident.title}</strong><br>${incident.barangay} • ${incident.date}<br>${incident.description}`,
-                { direction: "top" }
-            );
-            marker.on("click", () => openDetailModal(incident));
-        });
+        incidents
+            .filter((incident) => activeTypes.has(incident.type))
+            .filter((incident) => (barangayFilter && barangayFilter.value ? incident.barangay === barangayFilter.value : true))
+            .filter((incident) => (statusFilter && statusFilter.value ? incident.status === statusFilter.value : true))
+            .filter((incident) => isWithinDateRange(incident.date))
+            .forEach((incident) => {
+                const marker = createMarker(incident).addTo(markersLayer);
+                marker.bindTooltip(
+                    `<strong>${incident.title}</strong><br>${incident.barangay} • ${incident.date}<br>${incident.description}`,
+                    { direction: "top" }
+                );
+                marker.on("click", () => openDetailModal(incident));
+            });
+        console.log(`Rendered ${incidents.length} markers`);
+    } catch (error) {
+        console.error("Error rendering markers:", error);
+    }
 }
 
 function showDetails(incident) {
@@ -449,118 +477,175 @@ async function submitValidation(reaction) {
     }
 }
 
-credibleBtn.addEventListener("click", () => {
+credibleBtn?.addEventListener("click", () => {
     submitValidation("credible");
 });
 
-notCredibleBtn.addEventListener("click", () => {
+notCredibleBtn?.addEventListener("click", () => {
     submitValidation("not_credible");
 });
 
 searchInput.addEventListener("input", scheduleLoadIncidents);
-barangayFilter.addEventListener("change", loadIncidents);
-statusFilter.addEventListener("change", loadIncidents);
-dateStart.addEventListener("change", loadIncidents);
-dateEnd.addEventListener("change", loadIncidents);
+if (barangayFilter) barangayFilter.addEventListener("change", loadIncidents);
+if (statusFilter) statusFilter.addEventListener("change", loadIncidents);
+if (dateStart) dateStart.addEventListener("change", loadIncidents);
+if (dateEnd) dateEnd.addEventListener("change", loadIncidents);
 
-document.getElementById("reset-filters").addEventListener("click", () => {
-    resetFilters();
-    loadIncidents();
-});
+const resetButton = document.getElementById("reset-filters");
+if (resetButton) {
+    resetButton.addEventListener("click", () => {
+        resetFilters();
+        loadIncidents();
+    });
+}
 
-document.getElementById("close-details").addEventListener("click", () => {
-    detailsPanel.classList.remove("is-open");
-});
+const closeDetailsBtn = document.getElementById("close-details");
+if (closeDetailsBtn) {
+    closeDetailsBtn.addEventListener("click", () => {
+        detailsPanel.classList.remove("is-open");
+    });
+}
 
 closeModal.addEventListener("click", closeDetailModal);
 
-detailImageInput.addEventListener("change", async (event) => {
-    const file = event.target.files[0];
-    if (!file || !currentIncidentId) {
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append("incident_id", currentIncidentId);
-    formData.append("image", file);
-
-    uploadStatus.textContent = "Uploading...";
-
-    try {
-        const response = await fetch(`${apiBase}/upload-image.php`, {
-            method: "POST",
-            body: formData
-        });
-
-        const result = await response.json();
-        if (!result.ok) {
-            uploadStatus.textContent = result.error || "Upload failed.";
+if (detailImageInput) {
+    detailImageInput.addEventListener("change", async (event) => {
+        const file = event.target.files[0];
+        if (!file || !currentIncidentId) {
             return;
         }
 
-        uploadStatus.textContent = "Image uploaded successfully.";
-        detailImageInput.value = "";
-        loadIncidentDetail(currentIncidentId);
-    } catch (error) {
-        console.error("Image upload failed", error);
-        uploadStatus.textContent = "Upload failed. Please try again.";
-    }
-});
+        const formData = new FormData();
+        formData.append("incident_id", currentIncidentId);
+        formData.append("image", file);
 
-reportButton.addEventListener("click", openReportPanel);
-reportClose.addEventListener("click", closeReportPanel);
-reportCancel.addEventListener("click", closeReportPanel);
+        if (uploadStatus) uploadStatus.textContent = "Uploading...";
+
+        try {
+            const response = await fetch(`${apiBase}/upload-image.php`, {
+                method: "POST",
+                body: formData
+            });
+
+            const result = await response.json();
+            if (!result.ok) {
+                if (uploadStatus) uploadStatus.textContent = result.error || "Upload failed.";
+                return;
+            }
+
+            if (uploadStatus) uploadStatus.textContent = "Image uploaded successfully.";
+            detailImageInput.value = "";
+            loadIncidentDetail(currentIncidentId);
+        } catch (error) {
+            console.error("Image upload failed", error);
+            if (uploadStatus) uploadStatus.textContent = "Upload failed. Please try again.";
+        }
+    });
+}
+
+if (reportButton) reportButton.addEventListener("click", openReportPanel);
+if (reportClose) reportClose.addEventListener("click", closeReportPanel);
+if (reportCancel) reportCancel.addEventListener("click", closeReportPanel);
 
 map.on("click", (event) => {
-    if (!reportPanel.classList.contains("is-open")) {
+    if (!reportPanel || !reportPanel.classList.contains("is-open")) {
         return;
     }
     setReportCoords(event.latlng);
 });
 
-reportForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    if (!reportLatLng) {
-        reportStatus.textContent = "Please click on the map to set the report location.";
-        return;
-    }
-
-    const payload = {
-        crime_type_id: reportType.value,
-        title: reportTitle.value.trim(),
-        description: reportDescription.value.trim(),
-        barangay: reportBarangay.value,
-        occurred_date: reportDate.value,
-        occurred_time: reportTime.value,
-        severity: reportSeverity.value,
-        latitude: reportLatLng.lat,
-        longitude: reportLatLng.lng
-    };
-
-    reportStatus.textContent = "Submitting report...";
-    try {
-        const response = await fetch(`${apiBase}/report.php`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-        });
-        const result = await response.json();
-        if (!result.ok) {
-            reportStatus.textContent = result.error || "Submission failed.";
+if (reportForm) {
+    reportForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (!reportLatLng) {
+            if (reportStatus) reportStatus.textContent = "Please click on the map to set the report location.";
             return;
         }
 
-        reportStatus.textContent = "Report submitted. Awaiting verification.";
-        reportForm.reset();
-        reportLatLng = null;
-        reportCoords.value = "";
-        loadIncidents();
-    } catch (error) {
-        console.error("Report submission failed", error);
-        reportStatus.textContent = "Submission failed. Please try again.";
-    }
-});
+        const payload = {
+            crime_type_id: reportType.value,
+            title: reportTitle.value.trim(),
+            description: reportDescription.value.trim(),
+            barangay: reportBarangay.value,
+            occurred_date: reportDate.value,
+            occurred_time: reportTime.value,
+            severity: reportSeverity.value,
+            latitude: reportLatLng.lat,
+            longitude: reportLatLng.lng
+        };
 
-loadFilters().then(loadIncidents);
+        if (reportStatus) reportStatus.textContent = "Submitting report...";
+        try {
+            const response = await fetch(`${apiBase}/report.php`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            if (!result.ok) {
+                if (reportStatus) reportStatus.textContent = result.error || "Submission failed.";
+                return;
+            }
+
+            if (reportStatus) reportStatus.textContent = "Report submitted. Awaiting verification.";
+            reportForm.reset();
+            reportLatLng = null;
+            if (reportCoords) reportCoords.value = "";
+            loadIncidents();
+        } catch (error) {
+            console.error("Report submission failed", error);
+            if (reportStatus) reportStatus.textContent = "Submission failed. Please try again.";
+        }
+    });
+}
+
+loadFilters().then(() => {
+    console.log("Filters loaded successfully");
+    // If in barangay mode, set up barangay-specific filtering
+    if (isBarangayMode && userBarangayName) {
+        // Set the barangay filter to the user's assigned barangay
+        if (barangayFilter) {
+            barangayFilter.value = userBarangayName;
+            
+            // Hide the barangay filter group for barangay officers
+            const barangayFilterGroup = barangayFilter.closest('.filter-group');
+            if (barangayFilterGroup) {
+                barangayFilterGroup.style.display = 'none';
+            }
+        }
+        
+        // Pre-select barangay in report form
+        if (reportBarangay) {
+            reportBarangay.value = userBarangayName;
+            
+            // Hide the barangay selection in report form (only show in read-only mode)
+            const reportBarangayGroup = reportBarangay.closest('label');
+            if (reportBarangayGroup) {
+                reportBarangay.disabled = true;
+                reportBarangayGroup.style.opacity = '0.7';
+            }
+        }
+    }
+    
+    console.log("Loading incidents...");
+    loadIncidents().then(() => {
+        // Check if an incident ID is in the query parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const incidentId = urlParams.get('incident');
+        if (incidentId) {
+            console.log(`Auto-loading incident ${incidentId}`);
+            // Find the incident in the loaded incidents
+            const incident = incidents.find(i => i.id == incidentId);
+            if (incident) {
+                // Wait a bit for the map to render, then open the detail
+                setTimeout(() => {
+                    openDetailModal(incident);
+                }, 500);
+            }
+        }
+    });
+}).catch(error => {
+    console.error("Error in initialization:", error);
+});
