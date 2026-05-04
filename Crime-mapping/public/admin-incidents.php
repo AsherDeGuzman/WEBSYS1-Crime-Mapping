@@ -1,3 +1,8 @@
+<?php
+session_start();
+require __DIR__ . '/guard.php';
+requireRole(['admin']);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>

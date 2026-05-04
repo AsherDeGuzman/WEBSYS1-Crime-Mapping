@@ -85,6 +85,15 @@ requireRole(['admin']);
 </html>
 
     <script>
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
         const statusLabels = {
             pending: 'Pending',
             under_investigation: 'Under investigation',
@@ -118,13 +127,18 @@ requireRole(['admin']);
                 // Populate table
                 const table = document.getElementById('incident-table');
                 data.incidents.slice(0, 10).forEach(incident => {
+                    const safeTitle = escapeHtml(incident.title);
+                    const safeBarangay = escapeHtml(incident.barangay);
+                    const safeStatus = escapeHtml(statusLabels[incident.status] || incident.status);
+                    const safeSeverity = escapeHtml(severityLabels[incident.severity] || incident.severity);
+
                     const row = document.createElement('div');
                     row.className = 'table-row';
                     row.innerHTML = `
-                        <div>${incident.title}</div>
-                        <div>${incident.barangay}</div>
-                        <div>${statusLabels[incident.status] || incident.status}</div>
-                        <div>${severityLabels[incident.severity] || incident.severity}</div>
+                        <div>${safeTitle}</div>
+                        <div>${safeBarangay}</div>
+                        <div>${safeStatus}</div>
+                        <div>${safeSeverity}</div>
                     `;
                     table.appendChild(row);
                 });

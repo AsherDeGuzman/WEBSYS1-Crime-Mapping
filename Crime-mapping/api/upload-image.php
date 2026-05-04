@@ -1,5 +1,6 @@
 <?php
 header('Content-Type: application/json');
+session_start();
 
 require __DIR__ . '/db.php';
 
@@ -15,14 +16,40 @@ if (!isset($_POST['incident_id']) || !isset($_FILES['image'])) {
     exit;
 }
 
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['ok' => false, 'error' => 'Unauthorized.']);
+    exit;
+}
+
 $incidentId = (int) $_POST['incident_id'];
 $file = $_FILES['image'];
 
-$checkStmt = $pdo->prepare('SELECT incident_id FROM incidents WHERE incident_id = :id');
+$checkStmt = $pdo->prepare('SELECT incident_id, barangay_id, reported_by FROM incidents WHERE incident_id = :id');
 $checkStmt->execute([':id' => $incidentId]);
-if (!$checkStmt->fetch()) {
+$incident = $checkStmt->fetch();
+if (!$incident) {
     http_response_code(404);
     echo json_encode(['ok' => false, 'error' => 'Incident not found.']);
+    exit;
+}
+
+$userId = (int) $_SESSION['user_id'];
+$userRole = $_SESSION['role'] ?? null;
+$userBarangayId = isset($_SESSION['barangay_id']) ? (int) $_SESSION['barangay_id'] : null;
+
+$isAuthorized = false;
+if ($userRole === 'admin') {
+    $isAuthorized = true;
+} elseif ($userRole === 'barangay' && $userBarangayId && $userBarangayId === (int) $incident['barangay_id']) {
+    $isAuthorized = true;
+} elseif ($userRole === 'registered' && isset($incident['reported_by']) && (int) $incident['reported_by'] === $userId) {
+    $isAuthorized = true;
+}
+
+if (!$isAuthorized) {
+    http_response_code(403);
+    echo json_encode(['ok' => false, 'error' => 'Forbidden.']);
     exit;
 }
 
