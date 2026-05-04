@@ -30,12 +30,14 @@ if (!$user || $user['status'] !== 'active') {
 }
 
 $hash = $user['password_hash'];
-$isValid = password_verify($password, $hash) || hash_equals($hash, $password);
+$isValid = password_verify($password, $hash);
 if (!$isValid) {
     http_response_code(401);
     echo json_encode(['ok' => false, 'error' => 'Invalid credentials.']);
     exit;
 }
+
+session_regenerate_id(true);
 
 $_SESSION['user_id'] = (int) $user['user_id'];
 $_SESSION['username'] = $user['username'];

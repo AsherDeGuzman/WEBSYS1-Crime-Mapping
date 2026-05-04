@@ -21,6 +21,15 @@ const miniMarkers = L.layerGroup().addTo(miniMap);
 const feedContainer = document.getElementById("recent-feed");
 const alertsContainer = document.getElementById("alerts");
 
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
 function formatNotificationLabel(type) {
     const labels = {
         new_report: "New report",
@@ -40,12 +49,17 @@ function renderFeed(incidents) {
     }
 
     incidents.slice(0, 3).forEach((incident) => {
+        const safeTitle = escapeHtml(incident.title);
+        const safeBarangay = escapeHtml(incident.barangay);
+        const safeDate = escapeHtml(incident.date);
+        const safeStatus = escapeHtml(String(incident.status ?? "").replace(/_/g, " "));
+        const safeDescription = escapeHtml(incident.description);
         const item = document.createElement("div");
         item.className = "feed-item";
         item.innerHTML = `
-            <h3>${incident.title}</h3>
-            <div class="feed-meta">${incident.barangay} • ${incident.date} • ${incident.status.replace(/_/g, " ")}</div>
-            <p class="muted">${incident.description}</p>
+            <h3>${safeTitle}</h3>
+            <div class="feed-meta">${safeBarangay} • ${safeDate} • ${safeStatus}</div>
+            <p class="muted">${safeDescription}</p>
         `;
         feedContainer.appendChild(item);
     });
@@ -74,19 +88,16 @@ function renderAlerts(alerts, notifications = []) {
     }
 
     feedItems.forEach((entry) => {
+        const safeTitle = escapeHtml(entry.title);
+        const safeSubtitle = escapeHtml(entry.subtitle);
+        const safeMeta = escapeHtml(entry.meta);
         const itemElement = document.createElement("div");
         itemElement.className = "alert-item";
-        itemElement.innerHTML = entry.kind === "alert"
-            ? `
-                <strong>${entry.title}</strong>
-                <div class="alert-meta">${entry.subtitle}</div>
-                <div class="alert-time">${entry.meta}</div>
-            `
-            : `
-                <strong>${entry.title}</strong>
-                <div class="alert-meta">${entry.subtitle}</div>
-                <div class="alert-time">${entry.meta}</div>
-            `;
+        itemElement.innerHTML = `
+            <strong>${safeTitle}</strong>
+            <div class="alert-meta">${safeSubtitle}</div>
+            <div class="alert-time">${safeMeta}</div>
+        `;
         alertsContainer.appendChild(itemElement);
     });
 }
@@ -108,7 +119,9 @@ function renderMiniMap(incidents) {
             color: typeColors[incident.type] || "#22d3ee",
             fillOpacity: 0.8
         }).addTo(miniMarkers);
-        marker.bindTooltip(`${incident.title}<br>${incident.barangay}`, { direction: "top" });
+        const safeTitle = escapeHtml(incident.title);
+        const safeBarangay = escapeHtml(incident.barangay);
+        marker.bindTooltip(`${safeTitle}<br>${safeBarangay}`, { direction: "top" });
     });
 }
 

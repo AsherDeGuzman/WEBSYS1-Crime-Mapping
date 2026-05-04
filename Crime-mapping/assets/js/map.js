@@ -79,6 +79,15 @@ const detailImageInput = document.getElementById("detail-image-input");
 const uploadStatus = document.getElementById("upload-status");
 const closeModal = document.getElementById("close-modal");
 
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
 let markerStyle = "dot";
 let activeTypes = new Set();
 let reportLatLng = null;
@@ -91,10 +100,17 @@ function buildTypeFilters() {
     Object.entries(typeLabels).forEach(([key, label]) => {
         const wrapper = document.createElement("label");
         wrapper.className = "checkbox-item";
-        wrapper.innerHTML = `
-            <input type="checkbox" data-type="${key}" checked />
-            <span>${label}</span>
-        `;
+
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.setAttribute("data-type", key);
+        input.checked = true;
+
+        const span = document.createElement("span");
+        span.textContent = label;
+
+        wrapper.appendChild(input);
+        wrapper.appendChild(span);
         typeFilters.appendChild(wrapper);
     });
 
@@ -212,8 +228,12 @@ function renderMarkers() {
             .filter((incident) => isWithinDateRange(incident.date))
             .forEach((incident) => {
                 const marker = createMarker(incident).addTo(markersLayer);
+                const safeTitle = escapeHtml(incident.title);
+                const safeBarangay = escapeHtml(incident.barangay);
+                const safeDate = escapeHtml(incident.date);
+                const safeDescription = escapeHtml(incident.description);
                 marker.bindTooltip(
-                    `<strong>${incident.title}</strong><br>${incident.barangay} • ${incident.date}<br>${incident.description}`,
+                    `<strong>${safeTitle}</strong><br>${safeBarangay} • ${safeDate}<br>${safeDescription}`,
                     { direction: "top" }
                 );
                 marker.on("click", () => openDetailModal(incident));
@@ -228,8 +248,9 @@ function showDetails(incident) {
     currentIncidentId = incident.id;
     detailsPanel.classList.add("is-open");
     detailsTitle.textContent = "Selected report";
+    const safeTitle = escapeHtml(incident.title);
     detailsBody.innerHTML = `
-        <p><strong>${incident.title}</strong></p>
+        <p><strong>${safeTitle}</strong></p>
         <p class="muted">Full details are shown in the detail panel.</p>
     `;
 }
@@ -247,15 +268,23 @@ async function loadIncidentDetail(incidentId) {
         const incident = data.incident;
         modalTitle.textContent = incident.title;
 
+        const safeBarangay = escapeHtml(incident.barangay);
+        const safeOccurredAt = escapeHtml(incident.occurred_at);
+        const safeStatus = escapeHtml(formatStatus(incident.status));
+        const safeSeverity = escapeHtml(incident.severity);
+        const safeTypeName = escapeHtml(incident.type_name);
+        const safeReportedBy = escapeHtml(incident.reported_by);
+        const safeDescription = escapeHtml(incident.description);
+
         detailInfo.innerHTML = `
             <div>
-                <p><strong>Barangay:</strong> ${incident.barangay}</p>
-                <p><strong>Date:</strong> ${incident.occurred_at}</p>
-                <p><strong>Status:</strong> ${formatStatus(incident.status)}</p>
-                <p><strong>Severity:</strong> ${incident.severity}</p>
-                <p><strong>Type:</strong> ${incident.type_name}</p>
-                ${incident.reported_by ? `<p><strong>Reported by:</strong> ${incident.reported_by}</p>` : ''}
-                <p class="muted" style="margin-top: 12px;">${incident.description}</p>
+                <p><strong>Barangay:</strong> ${safeBarangay}</p>
+                <p><strong>Date:</strong> ${safeOccurredAt}</p>
+                <p><strong>Status:</strong> ${safeStatus}</p>
+                <p><strong>Severity:</strong> ${safeSeverity}</p>
+                <p><strong>Type:</strong> ${safeTypeName}</p>
+                ${incident.reported_by ? `<p><strong>Reported by:</strong> ${safeReportedBy}</p>` : ''}
+                <p class="muted" style="margin-top: 12px;">${safeDescription}</p>
             </div>
         `;
 

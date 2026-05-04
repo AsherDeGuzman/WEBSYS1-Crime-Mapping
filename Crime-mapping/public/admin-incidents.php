@@ -175,6 +175,19 @@
         const apiBase = "../api";
         let allIncidents = [];
 
+        function escapeHtml(value) {
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function sanitizeClassToken(value) {
+            return String(value ?? "").toLowerCase().replace(/[^a-z0-9_-]/g, "");
+        }
+
         async function loadIncidents() {
             try {
                 const response = await fetch(`${apiBase}/incidents.php`);
@@ -194,37 +207,51 @@
                 return;
             }
 
-            container.innerHTML = incidents.map(incident => `
-                <div class="incident-card" onclick="viewIncident(${incident.id})">
+            container.innerHTML = incidents.map(incident => {
+                const id = Number.parseInt(incident.id, 10) || 0;
+                const statusClass = sanitizeClassToken(incident.status);
+                const severityClass = sanitizeClassToken(incident.severity);
+                const title = escapeHtml(incident.title);
+                const statusLabel = escapeHtml(String(incident.status ?? "").replace(/_/g, ' '));
+                const description = escapeHtml(incident.description);
+                const shortDescription = description.length > 100 ? `${description.substring(0, 100)}...` : description;
+                const barangay = escapeHtml(incident.barangay);
+                const typeName = escapeHtml(incident.type_name);
+                const date = escapeHtml(incident.date);
+                const severity = escapeHtml(incident.severity);
+
+                return `
+                <div class="incident-card" onclick="viewIncident(${id})">
                     <div class="incident-card-header">
-                        <h3 class="incident-card-title">${incident.title}</h3>
-                        <span class="status-badge status-${incident.status}">${incident.status.replace(/_/g, ' ')}</span>
+                        <h3 class="incident-card-title">${title}</h3>
+                        <span class="status-badge status-${statusClass}">${statusLabel}</span>
                     </div>
-                    <p class="incident-card-description">${incident.description.substring(0, 100)}${incident.description.length > 100 ? '...' : ''}</p>
+                    <p class="incident-card-description">${shortDescription}</p>
                     <div class="incident-card-meta">
                         <div>
                             <strong>Barangay</strong>
-                            ${incident.barangay}
+                            ${barangay}
                         </div>
                         <div>
                             <strong>Type</strong>
-                            ${incident.type_name}
+                            ${typeName}
                         </div>
                         <div>
                             <strong>Date</strong>
-                            ${incident.date}
+                            ${date}
                         </div>
                         <div>
                             <strong>Severity</strong>
-                            <span class="severity-badge severity-${incident.severity}">${incident.severity}</span>
+                            <span class="severity-badge severity-${severityClass}">${severity}</span>
                         </div>
                     </div>
                     <div class="incident-card-footer">
-                        <small style="color: var(--muted);">ID: ${incident.id}</small>
-                        <a href="admin-map.php?incident=${incident.id}" class="link-small" onclick="event.stopPropagation()">View on Map →</a>
+                        <small style="color: var(--muted);">ID: ${id}</small>
+                        <a href="admin-map.php?incident=${id}" class="link-small" onclick="event.stopPropagation()">View on Map →</a>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         function filterIncidents() {
