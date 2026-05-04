@@ -1,4 +1,5 @@
 <?php
+# NIGGA NIGGA
 session_start();
 ?>
 <!DOCTYPE html>
